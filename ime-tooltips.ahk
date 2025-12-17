@@ -34,6 +34,11 @@ OsdTxt := OsdGui.Add("Text", "w" BoxSize " h" BoxSize " Center 0x200 c" FontColo
 ; キーフック設定
 ; ==============================================================================
 ~vkF3::CheckAndShowIME()     ; 全角/半角
+~vkF4::CheckAndShowIME()     ; 全角/半角
+~vk1C::CheckAndShowIME()     ; 変換
+~vk1D::CheckAndShowIME()     ; 無変換
+~vkF2::CheckAndShowIME()     ; ひらがな/カタカナ
+~vkF0::CheckAndShowIME()     ; 英数
 ~CapsLock::CheckAndShowIME() ; CapsLock
 
 ; ==============================================================================
