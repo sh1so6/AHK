@@ -1,4 +1,5 @@
 #Requires AutoHotkey v2.0
+#SingleInstance Force
 
 ; ==============================================================================
 ; 設定エリア
@@ -33,21 +34,25 @@ OsdTxt := OsdGui.Add("Text", "w" BoxSize " h" BoxSize " Center 0x200 c" FontColo
 ; ==============================================================================
 ; キーフック設定
 ; ==============================================================================
-~vkF3::CheckAndShowIME()     ; 全角/半角
-~vkF4::CheckAndShowIME()     ; 全角/半角
-~vk1C::CheckAndShowIME()     ; 変換
-~vk1D::CheckAndShowIME()     ; 無変換
-~vkF2::CheckAndShowIME()     ; ひらがな/カタカナ
-~vkF0::CheckAndShowIME()     ; 英数
-~CapsLock::CheckAndShowIME() ; CapsLock
+~vkF3::DeferCheck()     ; 全角/半角
+~vkF4::DeferCheck()     ; 全角/半角
+~vk1C::DeferCheck()     ; 変換
+~vk1D::DeferCheck()     ; 無変換
+~vkF2::DeferCheck()     ; ひらがな/カタカナ
+~vkF0::DeferCheck()     ; 英数
+~CapsLock::DeferCheck() ; CapsLock
+
+DeferCheck() {
+    ; 60-120msあたりで調整
+    SetTimer(CheckAndShowIME, -80)
+}
 
 ; ==============================================================================
 ; ロジック
 ; ==============================================================================
 CheckAndShowIME() {
-    Sleep 50
     try {
-        ret := IME_CHECK("A")
+        ret := IME_GetOpenStatus("A")
         if (ret == 1)
             ShowOSD(TextJp)
         else if (ret == 0)
@@ -56,45 +61,56 @@ CheckAndShowIME() {
 }
 
 ShowOSD(text) {
-    global OsdGui, OsdTxt
-    
+    global OsdGui, OsdTxt, BoxSize, ShowTime
     OsdTxt.Value := text
-    
     ; 画面中央の座標を計算
     x := (A_ScreenWidth - BoxSize) / 2
     y := (A_ScreenHeight - BoxSize) / 2
-    
     ; GUI表示
     OsdGui.Show("NoActivate x" x " y" y)
-    
-    ; ★ここが修正ポイント：表示した直後に「最前面」を強制的に再適用する
-    ; これにより、後から開いたウィンドウよりも手前に来ます
-    WinSetAlwaysOnTop 1, OsdGui.Hwnd
-    
-    SetTimer HideGUI, -ShowTime
+    WinSetAlwaysOnTop(1, OsdGui.Hwnd)
+    SetTimer(HideGUI, -ShowTime)
 }
 
 HideGUI() {
+    global OsdGui
     OsdGui.Hide()
 }
 
 ; ==============================================================================
 ; IME状態取得関数
 ; ==============================================================================
-IME_CHECK(WinTitle) {
-    try {
-        hWnd := WinExist(WinTitle)
-    } catch {
-        return 0
-    }
+IME_GetOpenStatus(WinTitle := "A") {
+    hWnd := WinExist(WinTitle)
     if !hWnd
         return 0
-
-    DetectHiddenWindows True
-    DefaultIMEWnd := DllCall("imm32\ImmGetDefaultIMEWnd", "Uint", hWnd, "Uint")
-    
-    if (DefaultIMEWnd) {
-        return SendMessage(0x0283, 0x0005, 0, , "ahk_id " DefaultIMEWnd)
+    if WinActive(WinTitle) {
+        fh := GetFocusedHwnd()
+        if (fh)
+            hwnd := fh
     }
-    return 0
+
+    imeWnd := DllCall("imm32\ImmGetDefaultIMEWnd", "Ptr", hWnd, "Ptr")
+    if !imeWnd
+        return 0
+
+    return DllCall("user32\SendMessageW",
+        "Ptr", imeWnd,
+        "UInt", 0x0283,
+        "Ptr", 0x0005,
+        "Ptr", 0)
+}
+
+GetFocusedHwnd() {
+    ptrSize := A_PtrSize
+    cbSize := 4 + 4 + (ptrSize * 6) + 16 ;GUITHREADINFO
+    buf := Buffer(cbSize, 0)
+    NumPut("UInt", cbSize, buf, 0)
+
+    if !DllCall("user32\GetGUIThreadInfo", "UInt", 0, "Ptr", buf)
+        return 0
+
+    ;hwndFocusはGUITHREADINFO内にある
+    ;先頭8バイト以降にhwndActive(Ptr)があり、その次がhwndFocus(Ptr)
+    return NumGet(buf, 8 + ptrSize, "Ptr")
 }
