@@ -5,7 +5,7 @@
 ShowAntigravityManager()
 
 ShowAntigravityManager() {
-    targetExe := "ahk_exe Antigravity.exe"
+    global targetExe := "ahk_exe Antigravity.exe"
     
     ; Antigravityが見つからない場合
     if !WinExist(targetExe) {
@@ -14,7 +14,7 @@ ShowAntigravityManager() {
     }
 
     ; GUI作成
-    myGui := Gui(, "Antigravity Mode Manager")
+    myGui := Gui("+AlwaysOnTop", "Antigravity Mode Manager")
     myGui.SetFont("s10", "Segoe UI")
     
     ; リストビュー: [ウィンドウタイトル] [現在のモード] [HWND(隠し)]
@@ -128,19 +128,34 @@ ToggleSelected(lv) {
             Name: "Planning|Fast", 
             MatchMode: "RegEx"
         })
+
+        tg2 := targetContainer.FindElement({
+            Type: "Button", 
+            Name: "Gemini|Claude|GPT", 
+            MatchMode: "RegEx"
+        })
         
         targetMode := (toggleBtn.Name == "Planning") ? "Fast" : "Planning"
+
+        tg2Mode := (targetMode == "Planning") ? "Gemini 3 Pro (High)" : "Gemini 3 Flash"
         
         toggleBtn.Click()
         
         ; メニュー選択 (ルートから待つ)
-        targetOption := winEl.WaitElement({Type: "Text", Name: targetMode}, 2000)
+        targetOption := winEl.WaitElement({Type: "Text", Name: targetMode}, 1000)
         targetOption.Click()
+
+        tg2.Click()
+
+        targetOption2 := winEl.WaitElement({Type: "Text", Name: tg2Mode}, 1000)
+        targetOption2.Click()
         
         ; 成功したらリスト上の表示も更新しておく
         lv.Modify(row, "Col2", targetMode)
-        
+
     } catch as e {
         MsgBox "切り替えに失敗しました: " e.Message
     }
+
+    RefreshList(lv, targetExe)
 }
