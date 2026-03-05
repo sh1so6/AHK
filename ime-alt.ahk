@@ -1,5 +1,6 @@
 #Requires AutoHotkey v2.0
 #SingleInstance Force
+Persistent
 
 ; --------------------------------------------------------------
 ; 1. CapsLockを「半角/全角」キーにリマップ

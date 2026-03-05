@@ -1,4 +1,6 @@
 #Requires AutoHotkey v2.0
+#SingleInstance Force
+Persistent
 
 ; Ctrl+C はそのまま通す（コピー実行）
 ~^c::
