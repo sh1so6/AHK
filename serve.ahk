@@ -19,7 +19,7 @@ path_ollama    := "C:\Users\9808g\scoop\apps\ollama-full\current\ollama.exe"
 ; =========================================================
 Run('"opencode" web', , "Hide", &pid_opencode)
 Run('"miniserve" E:/Dev/TemparMonkey -i 127.0.0.1 -p 18080 --header "Access-Control-Allow-Origin:*" --header "Access-Control-Allow-Methods:GET,OPTIONS"', , "Hide", &pid_miniserve)
-Run('"' path_ollama    '" serve', , "Hide", &pid_ollama)
+Run('"'path_ollama'" serve', , "Hide", &pid_ollama)
 
 ; =========================================================
 ; 3. スクリプト終了時（リロード時）のクリーンアップ処理
